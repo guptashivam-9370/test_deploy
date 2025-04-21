@@ -177,9 +177,12 @@ def create_model_comparison_plot(metrics_dict, metric_name='R2'):
     """
     plt.figure(figsize=(10, 6))
     
+    # Map the display metric name to the actual key in the dictionary
+    metric_key = 'R2' if metric_name == 'R²' else metric_name
+    
     # Extract metric values for each model
     models = list(metrics_dict.keys())
-    values = [metrics_dict[model][metric_name] for model in models]
+    values = [metrics_dict[model][metric_key] for model in models]
     
     # Create bar chart
     bars = plt.bar(models, values, color='skyblue')

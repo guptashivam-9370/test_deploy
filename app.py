@@ -116,22 +116,9 @@ def train_and_evaluate():
         joblib.dump(feature_columns, 'saved_models/feature_columns.joblib')
 
 def predict_with_api(input_data):
-    """Make prediction using the API"""
-    try:
-        response = requests.post(
-            f"{API_URL}/predict", 
-            json=input_data,
-            headers={"Content-Type": "application/json"}
-        )
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"API request failed with status code {response.status_code}: {response.text}")
-            return None
-    except Exception as e:
-        st.error(f"Failed to connect to API: {str(e)}")
-        return None
+    """Make prediction using the API - Disabled in favor of local prediction"""
+    st.warning("API prediction is disabled. Using local model prediction instead.")
+    return predict_locally(input_data)
 
 def predict_locally(input_data):
     """Make prediction locally using the trained model"""
@@ -372,7 +359,7 @@ elif page == "Model Evaluation":
             eval_df = pd.concat([eval_df, pd.DataFrame({
                 'Model': [model_name],
                 'MSE': [metrics['MSE']],
-                'R²': [metrics['R2']]
+                'R²': [metrics['R2']]  # Display as R² but using the R2 key from metrics
             })], ignore_index=True)
         
         st.dataframe(eval_df)
