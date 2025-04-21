@@ -37,15 +37,25 @@ def convert_scientific_notation(df):
     Returns:
         DataFrame with converted values
     """
-    # Convert all columns to numeric if possible
-    for col in df.columns:
+    df_converted = df.copy()
+    
+    # Process all columns
+    for col in df_converted.columns:
+        # Check if the column is of string type
+        if df_converted[col].dtype == 'object':
+            # Replace commas with points in scientific notation (e.g., 1,23E+08 -> 1.23E+08)
+            if df_converted[col].str.contains('E', case=True, na=False).any() or \
+               df_converted[col].str.contains('e', case=True, na=False).any():
+                df_converted[col] = df_converted[col].astype(str).str.replace(',', '.', regex=False)
+        
+        # Try to convert to numeric
         try:
-            df[col] = pd.to_numeric(df[col])
+            df_converted[col] = pd.to_numeric(df_converted[col])
         except:
             # If conversion fails, keep as is
             pass
     
-    return df
+    return df_converted
 
 def detect_and_handle_outliers(df, columns=None, method='iqr', threshold=1.5):
     """
