@@ -121,7 +121,7 @@ def normalize_features(df, columns=None, scaler=None):
     
     return df_normalized, scaler
 
-def prepare_data(file_path, target_column='Ethanol concentration', test_size=0.2, random_state=42):
+def prepare_data(file_path, target_column='Ethanol concentration', test_size=0.2, random_state=42, max_rows=5000):
     """
     Prepare data for machine learning models
     
@@ -130,18 +130,24 @@ def prepare_data(file_path, target_column='Ethanol concentration', test_size=0.2
         target_column: Name of the target column
         test_size: Proportion of the dataset to include in the test split
         random_state: Random state for reproducibility
+        max_rows: Maximum number of rows to use for performance
         
     Returns:
-        X_train, X_test, y_train, y_test, scaler
+        X_train, X_test, y_train, y_test, scaler, feature_columns
     """
     # Load data
     df = load_data(file_path)
     
     if df is None:
-        return None, None, None, None, None
+        return None, None, None, None, None, None
     
     # Convert scientific notation
     df = convert_scientific_notation(df)
+    
+    # Sample the data if it's too large
+    if df.shape[0] > max_rows:
+        print(f"Dataset has {df.shape[0]} rows. Using a {max_rows}-row sample for better performance.")
+        df = df.sample(n=max_rows, random_state=random_state)
     
     # Handle outliers
     df = detect_and_handle_outliers(df)

@@ -62,18 +62,39 @@ def plot_correlation_matrix(df):
     Returns:
         Figure with correlation matrix plot
     """
-    plt.figure(figsize=(12, 10))
-    
     # Get numeric columns
     numeric_df = df.select_dtypes(include=np.number)
+    
+    # Limit to at most 20 features for performance
+    if len(numeric_df.columns) > 20:
+        # Keep target column and most important features
+        if 'Ethanol concentration' in numeric_df.columns:
+            # Calculate correlation with target
+            target = 'Ethanol concentration'
+            correlations = numeric_df.corr()[target].abs().sort_values(ascending=False)
+            # Keep target and top 19 most correlated features
+            columns_to_keep = [target] + correlations.index[1:20].tolist()
+            numeric_df = numeric_df[columns_to_keep]
+        else:
+            # Just take the first 20 columns
+            numeric_df = numeric_df.iloc[:, :20]
+    
+    # Figure size based on number of features
+    n_features = len(numeric_df.columns)
+    figsize = (min(12, n_features*0.6), min(10, n_features*0.5))
+    plt.figure(figsize=figsize)
     
     # Calculate correlation matrix
     corr = numeric_df.corr()
     
-    # Create heatmap
+    # Create heatmap - reduce annotations for large matrices
     mask = np.triu(np.ones_like(corr, dtype=bool))
-    sns.heatmap(corr, mask=mask, annot=True, fmt=".2f", cmap='coolwarm', 
-                vmin=-1, vmax=1, linewidths=0.5)
+    
+    # Determine if annotations should be shown based on matrix size
+    show_annot = n_features <= 15  # Only show annotations for smaller matrices
+    
+    sns.heatmap(corr, mask=mask, annot=show_annot, fmt=".2f" if show_annot else "", 
+                cmap='coolwarm', vmin=-1, vmax=1, linewidths=0.5)
     
     plt.title('Feature Correlation Matrix')
     plt.tight_layout()
@@ -123,18 +144,37 @@ def plot_feature_distributions(df):
     # Get numeric columns
     numeric_df = df.select_dtypes(include=np.number)
     
+    # Limit to at most 15 features for performance
+    if len(numeric_df.columns) > 15:
+        # Keep target column and most important features
+        if 'Ethanol concentration' in numeric_df.columns:
+            # Calculate correlation with target
+            target = 'Ethanol concentration'
+            correlations = numeric_df.corr()[target].abs().sort_values(ascending=False)
+            # Keep target and top 14 most correlated features
+            columns_to_keep = [target] + correlations.index[1:15].tolist()
+            numeric_df = numeric_df[columns_to_keep]
+        else:
+            # Just take the first 15 columns
+            numeric_df = numeric_df.iloc[:, :15]
+    
     # Calculate number of rows and columns for subplots
     n_features = len(numeric_df.columns)
     n_cols = 3
     n_rows = (n_features + n_cols - 1) // n_cols
     
     # Create figure
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, n_rows * 4))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, n_rows * 3))
     axes = axes.flatten()
     
-    # Plot distributions
+    # Plot distributions - use faster matplotlib instead of seaborn for large datasets
     for i, col in enumerate(numeric_df.columns):
-        sns.histplot(numeric_df[col], kde=True, ax=axes[i])
+        # Use faster histogram for large datasets
+        if len(df) > 1000:
+            axes[i].hist(numeric_df[col], bins=30, alpha=0.7)
+        else:
+            sns.histplot(numeric_df[col], kde=True, ax=axes[i])
+        
         axes[i].set_title(f'Distribution of {col}')
         axes[i].set_xlabel(col)
         axes[i].set_ylabel('Frequency')

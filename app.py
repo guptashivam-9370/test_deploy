@@ -59,6 +59,12 @@ def load_dataset():
     """Load and prepare the dataset"""
     data = load_data(DATA_PATH)
     if data is not None:
+        # Sample the data to make it more manageable if it's too large
+        if data.shape[0] > 5000:
+            st.warning(f"Dataset is large ({data.shape[0]} rows). Using a 5000-row sample for better performance.")
+            # Take a stratified sample
+            data = data.sample(n=5000, random_state=42)
+        
         data = convert_scientific_notation(data)
         st.session_state.data = data
         return data
